@@ -1,0 +1,33 @@
+vrrp_script chk_myscript {
+  script       "/root/check_test.sh"
+  interval 2   # check every 2 seconds
+  fall 2       # require 2 failures for KO
+  rise 2       # require 2 successes for OK
+}
+
+global_defs {
+  enable_script_security
+}
+
+vrrp_instance VI_1 {
+  interface ens33 # interface to monitor
+
+  state BACKUP # MASTER on haproxy1, BACKUP on haproxy2
+  # notify /usr/local/bin/keepalivednotify.sh
+  # Unique router id used for VIP setup,
+  # Unique for VIP cluster of load balancers.
+  virtual_router_id 51
+
+  # Same priority on both load balancer nodes so switch happens
+  # only on other nodes failover
+  priority 100
+
+  virtual_ipaddress {
+    192.168.60.147 # virtual ip address
+  }
+
+  track_script {
+    chk_myscript
+  }
+  notify /root/NotifyKeepalived.sh
+}
