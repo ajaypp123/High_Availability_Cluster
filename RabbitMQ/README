@@ -1,0 +1,27 @@
+
+# POC: RabbitMQ will send message to internal network vip host from two node.
+
+1. Install RabbitMQ on both node
+
+2. Configure Corosync pacemaker with two node
+
+3. Create vip with pacemaker and add entry in /etc/hosts
+    $ pcs -f rmq_cfg resource create vip ocf:heartbeat:IPaddr2 ip=192.168.60.147 cidr_netmask=24 nic=ens33 op monitor interval="15s" timeout="10s"
+
+    $ cat /etc/hosts | grep vip
+    vip    192.168.60.147
+
+4. Copy Node1 and Node2 dir from repo to their node.
+
+5. Create Pacemaker agent for rabbitmq and push to cluster
+    $ pcs -f rmq_cfg resource create rabbitmq systemd:rabbitmq-server op monitor timeout="10s" interval="15s" 
+    $ pcs cluster cib-push rmq_cfg
+
+6. Off firewalld and SELINUX Policy to both node.
+
+7. Run reciver.py on one node where RabbitMQ is active and sender.py from both node
+    : reciver.py will receive message from both node.
+
+8. Do failover so that RabbitMQ will switch to other node
+
+9. Then try same from other node.
